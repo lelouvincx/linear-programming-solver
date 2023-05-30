@@ -1,35 +1,28 @@
-from pulp import LpMaximize, LpMinimize, LpProblem, LpStatus, LpVariable
+from scipy.optimize import linprog
 
-# Create the LP problem instance
-problem = LpProblem("Linear_Programming_Problem", LpMinimize)  # or LpMaximize for maximization
+# Define the coefficients of the objective function
+c = [-10, -20, -15]  # Coefficients to minimize
 
-# Define the decision variables
-x = LpVariable("x", lowBound=0)  # Example variable
-y = LpVariable("y", lowBound=0)  # Example variable
+# Define the inequality constraints
+A = [[1, 1, 1],  # Coefficients of x1, x2, x3 in the first constraint
+     [-1, 0, 0],  # Coefficients of x1, x2, x3 in the second constraint
+     [0, -1, 0],  # Coefficients of x1, x2, x3 in the third constraint
+     [0, 0, -1]]  # Coefficients of x1, x2, x3 in the fourth constraint
+b = [100, -50, -60, -40]  # Right-hand side values of the constraints
 
-# Define the objective function
-# Example: Minimize 2x + 3y
-objective_function = 2 * x + 3 * y
-problem += objective_function
+# Define the bounds for the variables
+x_bounds = [(0, None), (0, None), (0, None)]  # Non-negative constraints for x1, x2, x3
 
-# Add constraints
-# Example: 3x + 4y >= 10
-constraint1 = 3 * x + 4 * y >= 10
-problem += constraint1
+# Solve the linear programming problem
+result = linprog(c, A_ub=A, b_ub=b, bounds=x_bounds)
 
-# Example: x + y <= 6
-constraint2 = x + y <= 6
-problem += constraint2
-
-# Solve the LP problem
-status = problem.solve()
-
-# Print the status of the solution
-print("Status:", LpStatus[status])
+# Print the solution status
+print("Status:", result.message)
 
 # Print the optimal solution
-for variable in problem.variables():
-    print(f"{variable.name} = {variable.varValue}")
+print("Optimal Solution:")
+for i, var in enumerate(result.x):
+    print(f"x{i+1} =", var)
 
 # Print the optimal objective value
-print("Optimal Objective Value:", problem.objective.value())
+print("Total Cost =", -result.fun)  # Multiply the objective value by -1 to get the minimized cost
