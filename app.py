@@ -1,6 +1,13 @@
+"""
+This is main file for processing.
+And is called from streamlit to show on the web UI.
+"""
+
+
 import streamlit as st
 # from utils import LpMaximize, LpMinimize, LpProblem, LpStatus, LpVariable
-from pulp import LpMaximize, LpMinimize, LpProblem, LpStatus, LpVariable
+from pulp import LpProblem, LpVariable
+from utils import LpMaximize, LpMinimize, LpStatus, LpSolution
 
 
 st.set_page_config(
@@ -14,6 +21,13 @@ st.title("Giải quy hoạch tuyến tính online")
 # Settings
 st.markdown("## I. Hướng dẫn")
 st.sidebar.title("⚙ Cài đặt")
+st.sidebar.subheader("Thành viên")
+st.sidebar.markdown("""
+    | Name | Student ID | Leader | Note |
+    |---|---|---|---|
+    | Dinh Minh Chinh | 21280007 | x | |
+    | Nguyen Trong Nhan | 21280038 | | |
+""")
 
 
 # Problem Type use 2 columns
@@ -57,7 +71,8 @@ for i in range(num_vars):
         # Create a selectbox for lower bound
         option_lower_bound = st.selectbox(
             f"Cận dưới của biến x{i+1}:",
-            ("Âm vô cùng", "Khác")
+            ("Âm vô cùng", "Khác"),
+            index=1
         )
         if option_lower_bound == "Khác":
             var_lower_bound = st.number_input(
@@ -113,7 +128,8 @@ with col1:
 for i in range(num_vars):
     objective_function = objective_function.replace(f"x{i+1}", f"var[{i}]")
 # Add objective function to problem
-problem += eval(objective_function)
+if objective_function != "":
+    problem += eval(objective_function)
 
 # Add constraints
 st.markdown("### 4. Ràng buộc")
@@ -124,7 +140,7 @@ num_constraints = st.slider("Số ràng buộc", 1, 10, 2, 1)
 for i in range(num_constraints):
     constraints.append(
         st.text_input(
-            f"Ràng buộc {i+1} (e.g. 3*x1 + 4*x2 >= 10):", value="3*x1 + 4*x2 >= 10"
+            f"Ràng buộc {i+1} (e.g. 3*x1 + 4*x2 >= 10):", placeholder="3*x1 + 4*x2 >= 10"
         )
     )
 # Replace x1, x2, ... with the variables
@@ -133,7 +149,8 @@ for i in range(num_vars):
         constraints[j] = constraints[j].replace(f"x{i+1}", f"var[{i}]")
 # Add constraints to problem
 for constraint in constraints:
-    problem += eval(constraint)
+    if constraint is not None and constraint != "":
+        problem += eval(constraint)
 
 
 # Write the problem
@@ -144,9 +161,27 @@ st.code(str(problem))
 # Solve the LP problem
 status = problem.solve()
 
+# Result
 st.markdown("## Bài giải")
-if st.button("Click để giải bài toán (no clickbait):"):
-    st.write(f"Trạng thái: {LpStatus[status]}")
-    for i in range(num_vars):
-        st.write(f"x{i+1}: {var[i].value()}")
-    st.write(f"Nghiệm tối ưu: {problem.objective.value()}")
+st.info(f"Giải được: {LpSolution[status]}")
+if st.button("Click để giải bài toán"):
+    st.balloons()
+    st.info(f"Trạng thái: {LpStatus[status]}")
+    if status == 1: # Optimal
+        st.markdown("#### Thông tin nghiệm:")
+        for i in range(num_vars):
+            st.markdown(f"- x{i+1} = {var[i].value()}")
+        try:
+            st.info(f"Nghiệm tối ưu: {problem.objective.value()}")
+        except Exception as e:
+            st.exception(e)
+        else:
+            st.success("Giải thành công!")
+    elif status == -2: # Unbounded
+        if problem_type == "Maximization":
+            st.info(f"Giá trị tối ưu: $\\infty$")
+        else:
+            st.info(f"Giá trị tối ưu: $-\\infty$")
+
+    if st.button("Giải tiếp"):
+        st.experimental_rerun()

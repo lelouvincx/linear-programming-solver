@@ -1,28 +1,31 @@
-from scipy.optimize import linprog
+import numpy as np
+import matplotlib.pyplot as plt
 
-# Define the coefficients of the objective function
-c = [-10, -20, -15]  # Coefficients to minimize
+# Define the constraints
+x = np.linspace(0, 10, 400)
+c11 = 9 - x
+c12 = 18 - 3*x
+c13 = np.minimum(7, x)
+c14 = np.minimum(6, x)
 
-# Define the inequality constraints
-A = [[1, 1, 1],  # Coefficients of x1, x2, x3 in the first constraint
-     [-1, 0, 0],  # Coefficients of x1, x2, x3 in the second constraint
-     [0, -1, 0],  # Coefficients of x1, x2, x3 in the third constraint
-     [0, 0, -1]]  # Coefficients of x1, x2, x3 in the fourth constraint
-b = [100, -50, -60, -40]  # Right-hand side values of the constraints
+# Plot the constraints
+plt.plot(x, c11, label='x1 + x2 <= 9')
+plt.plot(x, c12, label='3*x1 + x2 <= 18')
+plt.plot(x, c13, label='x1 <= 7')
+plt.plot(np.full_like(x, 7), x, label='x1 = 7')
+plt.plot(x, c14, label='x2 <= 6')
+plt.plot(x, np.full_like(x, 6), label='x2 = 6')
 
-# Define the bounds for the variables
-x_bounds = [(0, None), (0, None), (0, None)]  # Non-negative constraints for x1, x2, x3
+# Shade the feasible region
+plt.fill_between(x, np.minimum(c11, np.minimum(c12, np.minimum(c13, 6))), 0, where=(x>=0) & (c11>=0) & (c12>=0) & (c13>=0) & (c14>=0), alpha=0.3)
 
-# Solve the linear programming problem
-result = linprog(c, A_ub=A, b_ub=b, bounds=x_bounds)
+# Add labels and title
+plt.xlabel('x1')
+plt.ylabel('x2')
+plt.title('Feasible Region')
 
-# Print the solution status
-print("Status:", result.message)
+# Add legend
+plt.legend()
 
-# Print the optimal solution
-print("Optimal Solution:")
-for i, var in enumerate(result.x):
-    print(f"x{i+1} =", var)
-
-# Print the optimal objective value
-print("Total Cost =", -result.fun)  # Multiply the objective value by -1 to get the minimized cost
+# Show the plot
+plt.show()
