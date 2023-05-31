@@ -14,7 +14,7 @@ st.set_page_config(
     page_title="Giải quy hoạch tuyến tính online",
     page_icon="📔",
     layout="centered",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 st.title("Giải quy hoạch tuyến tính online")
 
